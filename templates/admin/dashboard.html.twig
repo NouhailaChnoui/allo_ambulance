@@ -1,0 +1,172 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord Admin - Allo Ambulance{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+
+
+    <!-- statistiques -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Demandes</h6>
+                            <h2 class="mb-0">{{ stats.totalDemandes|default(0) }}</h2>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">En Cours</h6>
+                            <h2 class="mb-0">{{ stats.demandesEnCours|default(0) }}</h2>
+                        </div>
+                        <i class="fas fa-spinner fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Terminées</h6>
+                            <h2 class="mb-0">{{ stats.demandesTerminees|default(0) }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Clients</h6>
+                            <h2 class="mb-0">{{ stats.totalClients|default(0) }}</h2>
+                        </div>
+                        <i class="fas fa-users fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Actions Rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ path('admin_demandes') }}" class="card text-center text-decoration-none h-100">
+                                <div class="card-body">
+                                    <i class="fas fa-list fa-3x text-primary mb-3"></i>
+                                    <h5 class="card-title">Demandes</h5>
+                                    <p class="card-text text-muted small">Gérer les demandes de transport</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ path('admin_ambulances') }}" class="card text-center text-decoration-none h-100">
+                                <div class="card-body">
+                                    <i class="fas fa-ambulance fa-3x text-success mb-3"></i>
+                                    <h5 class="card-title">Ambulances</h5>
+                                    <p class="card-text text-muted small">Gérer le parc ambulancier</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ path('admin_chauffeurs') }}" class="card text-center text-decoration-none h-100">
+                                <div class="card-body">
+                                    <i class="fas fa-user-tie fa-3x text-warning mb-3"></i>
+                                    <h5 class="card-title">Chauffeurs</h5>
+                                    <p class="card-text text-muted small">Gérer les chauffeurs</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ path('admin_clients') }}" class="card text-center text-decoration-none h-100">
+                                <div class="card-body">
+                                    <i class="fas fa-users fa-3x text-info mb-3"></i>
+                                    <h5 class="card-title">Clients</h5>
+                                    <p class="card-text text-muted small">Gérer les utilisateurs</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- dernières demandes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Dernières Demandes</h5>
+                    <a href="{{ path('admin_demandes') }}" class="btn btn-sm btn-outline-primary">
+                        Voir toutes
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recentDemandes|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Client</th>
+                                        <th>Type</th>
+                                        <th>Date</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for demande in recentDemandes %}
+                                        <tr>
+                                            <td>#{{ demande.id }}</td>
+                                            <td>{{ demande.client.getFullName() }}</td>
+                                            <td>{{ demande.getTypeLabel() }}</td>
+                                            <td>{{ demande.createdAt|date('d/m/Y H:i') }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ demande.statut == 'termine' ? 'success' : (demande.statut == 'en_cours' ? 'warning' : 'secondary') }}">
+                                                    {{ demande.getStatutLabel() }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="#" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Aucune demande pour le moment</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

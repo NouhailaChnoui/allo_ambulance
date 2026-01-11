@@ -1,0 +1,461 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Demandes - Admin Allo Ambulance{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="fas fa-list text-primary"></i> 
+            Gestion des Demandes
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('admin_dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total demandes</h6>
+                            <h2 class="mb-0">{{ demandes|length }}</h2>
+                        </div>
+                        <i class="fas fa-inbox fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">En attente</h6>
+                            <h2 class="mb-0">{{ demandes|filter(d => d.statut == 'en_attente')|length }}</h2>
+                        </div>
+                        <i class="fas fa-clock fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">En cours</h6>
+                            <h2 class="mb-0">{{ demandes|filter(d => d.statut == 'en_cours')|length }}</h2>
+                        </div>
+                        <i class="fas fa-spinner fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Terminées</h6>
+                            <h2 class="mb-0">{{ demandes|filter(d => d.statut == 'termine')|length }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ path('admin_demandes') }}" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Statut</label>
+                    <select name="statut" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="en_attente" {{ app.request.query.get('statut') == 'en_attente' ? 'selected' : '' }}>En attente</option>
+                        <option value="en_cours" {{ app.request.query.get('statut') == 'en_cours' ? 'selected' : '' }}>En cours</option>
+                        <option value="termine" {{ app.request.query.get('statut') == 'termine' ? 'selected' : '' }}>Terminé</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select name="type" class="form-select">
+                        <option value="">Tous les types</option>
+                        <option value="urgence" {{ app.request.query.get('type') == 'urgence' ? 'selected' : '' }}>Urgence</option>
+                        <option value="muti-urgent" {{ app.request.query.get('type') == 'muti-urgent' ? 'selected' : '' }}>Multi-Urgent</option>
+                        <option value="transport" {{ app.request.query.get('type') == 'transport' ? 'selected' : '' }}>Transport</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date de début</label>
+                    <input type="date" name="date_debut" class="form-control" value="{{ app.request.query.get('date_debut') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date de fin</label>
+                    <input type="date" name="date_fin" class="form-control" value="{{ app.request.query.get('date_fin') }}">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Filtrer
+                    </button>
+                    <a href="{{ path('admin_demandes') }}" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i> Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- tableau des demandes -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Liste des demandes</h5>
+            <span class="badge bg-primary">{{ demandes|length }} demande(s)</span>
+        </div>
+        <div class="card-body">
+            {% if demandes|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Client</th>
+                                <th>Type</th>
+                                <th>Départ</th>
+                                <th>Destination</th>
+                                <th>Date</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for demande in demandes %}
+                                <tr>
+                                    <td>#{{ demande.id }}</td>
+                                    <td>
+                                        <div>{{ demande.client.getFullName() }}</div>
+                                        <small class="text-muted">{{ demande.client.email }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ demande.type == 'urgence' ? 'danger' : (demande.type == 'muti-urgent' ? 'warning' : 'info') }}">
+                                            {{ demande.getTypeLabel() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ demande.adresseDepart|slice(0, 20) }}...</td>
+                                    <td>{{ demande.adresseDestination|slice(0, 20) }}...</td>
+                                    <td>{{ demande.createdAt|date('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ demande.statut == 'termine' ? 'success' : (demande.statut == 'en_cours' ? 'warning' : 'secondary') }}">
+                                            {{ demande.getStatutLabel() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- bouton details -->
+                                            <button type="button" class="btn btn-outline-info" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#demandeDetailModal"
+                                                    onclick="loadDemandeData(
+                                                        {{ demande.id }},
+                                                        '{{ demande.client.getFullName()|escape('js') }}',
+                                                        '{{ demande.client.email|escape('js') }}',
+                                                        '{{ demande.client.telephone|default('Non renseigné')|escape('js') }}',
+                                                        '{{ demande.type|escape('js') }}',
+                                                        '{{ demande.adresseDepart|escape('js') }}',
+                                                        '{{ demande.adresseDestination|escape('js') }}',
+                                                        '{{ demande.createdAt|date('d/m/Y H:i') }}',
+                                                        '{{ demande.statut|escape('js') }}',
+                                                        '{{ demande.getTypeLabel()|escape('js') }}',
+                                                        '{{ demande.getStatutLabel()|escape('js') }}',
+                                                        {% if demande.ambulance %}'{{ demande.ambulance.immatriculation|escape('js') }}'{% else %}null{% endif %},
+                                                        {% if demande.driver %}'{{ demande.driver.getFullName()|escape('js') }}'{% else %}null{% endif %}
+                                                    )">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            
+                                            <!-- bouton modifier -->
+                                            {% if demande.statut != 'termine' %}
+                                                <button type="button" class="btn btn-outline-primary" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#editDemandeModal"
+                                                        onclick="loadDemandeEditData(
+                                                            {{ demande.id }},
+                                                            '{{ demande.statut }}',
+                                                            {% if demande.ambulance %}{{ demande.ambulance.id }}{% else %}null{% endif %},
+                                                            {% if demande.driver %}{{ demande.driver.id }}{% else %}null{% endif %}
+                                                        )">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            {% endif %}
+                                            
+                                            <!-- boutons statut -->
+                                            {% if demande.statut == 'en_attente' %}
+                                                <form method="post" action="{{ path('admin_demande_update_statut', {'id': demande.id, 'statut': 'en_cours'}) }}" 
+                                                      onsubmit="return confirm('Voulez-vous vraiment accepter cette demande?');"
+                                                      style="display: inline;">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('update_statut_' ~ demande.id) }}">
+                                                    <button type="submit" class="btn btn-outline-success" title="Accepter">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="post" action="{{ path('admin_demande_update_statut', {'id': demande.id, 'statut': 'annule'}) }}" 
+                                                      onsubmit="return confirm('Voulez-vous vraiment refuser cette demande?');"
+                                                      style="display: inline;">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('update_statut_' ~ demande.id) }}">
+                                                    <button type="submit" class="btn btn-outline-danger" title="Refuser">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </form>
+                                            {% elseif demande.statut == 'en_cours' %}
+                                                <form method="post" action="{{ path('admin_demande_update_statut', {'id': demande.id, 'statut': 'termine'}) }}" 
+                                                      onsubmit="return confirm('Marquer cette demande comme terminée?');"
+                                                      style="display: inline;">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('update_statut_' ~ demande.id) }}">
+                                                    <button type="submit" class="btn btn-outline-success" title="Terminer">
+                                                        <i class="fas fa-flag-checkered"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                            
+                                            <!-- bouton supprimer -->
+                                            <form method="post" action="{{ path('admin_demande_delete', {'id': demande.id}) }}" 
+                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette demande?');"
+                                                  style="display: inline;">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ demande.id) }}">
+                                                <button type="submit" class="btn btn-outline-danger" title="Supprimer">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucune demande trouvée</h5>
+                    <p class="text-muted">Aucune demande n'a été créée pour le moment.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!--   details demande -->
+<div class="modal fade" id="demandeDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-alt"></i> Détails de la demande #<span id="detailDemandeId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2 mb-3">Informations client</h6>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Nom complet</strong></label>
+                            <p class="form-control-static" id="detailClientName">-</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Email</strong></label>
+                            <p class="form-control-static" id="detailClientEmail">-</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Téléphone</strong></label>
+                            <p class="form-control-static" id="detailClientPhone">-</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2 mb-3">Informations demande</h6>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Type</strong></label>
+                            <p class="form-control-static"><span class="badge" id="detailDemandeType">-</span></p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Statut</strong></label>
+                            <p class="form-control-static"><span class="badge" id="detailDemandeStatut">-</span></p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Date de création</strong></label>
+                            <p class="form-control-static" id="detailDemandeDate">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2 mb-3">Adresse de départ</h6>
+                        <p class="form-control-static" id="detailDepartAdresse">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2 mb-3">Adresse de destination</h6>
+                        <p class="form-control-static" id="detailDestinationAdresse">-</p>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2 mb-3">Ambulance affectée</h6>
+                        <p class="form-control-static" id="detailAmbulance">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2 mb-3">Chauffeur affecté</h6>
+                        <p class="form-control-static" id="detailChauffeur">-</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editDemandeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Modifier la demande</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="" id="editDemandeForm">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('edit_demande') }}">
+                    <input type="hidden" name="id" id="editDemandeId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Statut</label>
+                        <select name="statut" id="editDemandeStatut" class="form-select">
+                            <option value="en_attente">En attente</option>
+                            <option value="en_cours">En cours</option>
+                            <option value="termine">Terminé</option>
+                            <option value="annule">Annulé</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Ambulance</label>
+                        <select name="ambulance_id" id="editDemandeAmbulance" class="form-select">
+                            <option value="">Aucune ambulance</option>
+                            {% for ambulance in ambulances|filter(a => a.disponible) %}
+                                <option value="{{ ambulance.id }}">{{ ambulance.immatriculation }} - {{ ambulance.marque }} {{ ambulance.modele }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Chauffeur</label>
+                        <select name="driver_id" id="editDemandeDriver" class="form-select">
+                            <option value="">Aucun chauffeur</option>
+                            {% for chauffeur in chauffeurs|filter(c => c.disponible) %}
+                                <option value="{{ chauffeur.id }}">{{ chauffeur.getFullName() }} - {{ chauffeur.permis }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> L'affectation d'une ambulance et d'un chauffeur marquera automatiquement la demande comme "En cours"
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fonction pour charger les données dans le modal de détails
+function loadDemandeData(id, clientName, clientEmail, clientPhone, type, depart, destination, date, statut, typeLabel, statutLabel, ambulance, driver) {
+    document.getElementById('detailDemandeId').textContent = id;
+    document.getElementById('detailClientName').textContent = clientName;
+    document.getElementById('detailClientEmail').textContent = clientEmail;
+    document.getElementById('detailClientPhone').textContent = clientPhone;
+    document.getElementById('detailDepartAdresse').textContent = depart;
+    document.getElementById('detailDestinationAdresse').textContent = destination;
+    document.getElementById('detailDemandeDate').textContent = date;
+    
+    // Type badge
+    const typeBadge = document.getElementById('detailDemandeType');
+    typeBadge.textContent = typeLabel;
+    typeBadge.className = 'badge bg-' + (type === 'urgence' ? 'danger' : (type === 'muti-urgent' ? 'warning' : 'info'));
+    
+    // Statut badge
+    const statutBadge = document.getElementById('detailDemandeStatut');
+    statutBadge.textContent = statutLabel;
+    statutBadge.className = 'badge bg-' + (statut === 'termine' ? 'success' : (statut === 'en_cours' ? 'warning' : 'secondary'));
+    
+    // Ambulance et chauffeur
+    document.getElementById('detailAmbulance').textContent = ambulance || 'Non affectée';
+    document.getElementById('detailChauffeur').textContent = driver || 'Non affecté';
+}
+
+// Fonction pour charger les données dans le modal d'édition
+function loadDemandeEditData(id, statut, ambulanceId, driverId) {
+    document.getElementById('editDemandeId').value = id;
+    document.getElementById('editDemandeStatut').value = statut;
+    
+    if (ambulanceId) {
+        document.getElementById('editDemandeAmbulance').value = ambulanceId;
+    }
+    
+    if (driverId) {
+        document.getElementById('editDemandeDriver').value = driverId;
+    }
+    
+    // Mettre à jour l'action du formulaire
+    const url = "{{ path('admin_demande_edit', {'id': 'PLACEHOLDER'}) }}".replace('PLACEHOLDER', id);
+    document.getElementById('editDemandeForm').action = url;
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    // Tooltips pour les boutons d'actions
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+
+<style>
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+.form-control-static {
+    min-height: calc(1.5em + 0.75rem + 2px);
+    padding: 0.375rem 0;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6;
+}
+.badge {
+    font-size: 0.85em;
+    padding: 0.35em 0.65em;
+}
+</style>
+{% endblock %}

@@ -1,11 +1,147 @@
-# yaml-language-server: $schema=../vendor/symfony/routing/Loader/schema/routing.schema.json
+app_login:
+    path: /login
+    controller: App\Controller\SecurityController::login
+    methods: [GET, POST]
 
-# This file is the entry point to configure the routes of your app.
-# Methods with the #[Route] attribute are automatically imported.
-# See also https://symfony.com/doc/current/routing.html
+app_register:
+    path: /register
+    controller: App\Controller\SecurityController::register
+    methods: [GET, POST]
 
-# To list all registered routes, run the following command:
-#   bin/console debug:router
+app_logout:
+    path: /logout
+    methods: [GET]
 
+app_home:
+    path: /
+    controller: App\Controller\HomeController::index
+    methods: [GET]
+
+app_demande_urgence:
+    path: /demande/urgence
+    controller: App\Controller\HomeController::urgence
+    methods: [GET, POST]
+
+app_demande_muti_urgent:
+    path: /demande/muti-urgent
+    controller: App\Controller\HomeController::mutiUrgent
+    methods: [GET, POST]
+
+app_demande_transport:
+    path: /demande/transport
+    controller: App\Controller\HomeController::transport
+    methods: [GET, POST]
+
+app_about:
+    path: /about
+    controller: App\Controller\HomeController::about
+    methods: [GET]
+
+app_historique:
+    path: /historique
+    controller: App\Controller\HomeController::historique
+    methods: [GET]
+
+app_profil:
+    path: /profil
+    controller: App\Controller\HomeController::profil
+    methods: [GET, POST]
+
+app_contact:
+    path: /contact
+    controller: App\Controller\HomeController::contact
+    methods: [GET, POST]
+
+app_demande_delete:
+    path: /demande/{id}/delete
+    controller: App\Controller\HomeController::deleteDemande
+    methods: [POST]
+
+admin_dashboard:
+    path: /admin
+    controller: App\Controller\AdminController::dashboard
+    methods: [GET]
+
+admin_ambulances:
+    path: /admin/ambulances
+    controller: App\Controller\AdminController::ambulances
+    methods: [GET]
+
+admin_ambulance_new:
+    path: /admin/ambulances/new
+    controller: App\Controller\AdminController::newAmbulance
+    methods: [GET, POST]
+
+admin_ambulance_edit:
+    path: /admin/ambulances/{id}/edit
+    controller: App\Controller\AdminController::editAmbulance
+    methods: [GET, POST]
+
+admin_ambulance_delete:
+    path: /admin/ambulances/{id}/delete
+    controller: App\Controller\AdminController::deleteAmbulance
+    methods: [POST]
+
+admin_drivers:
+    path: /admin/drivers
+    controller: App\Controller\AdminController::drivers
+    methods: [GET]
+
+admin_driver_new:
+    path: /admin/drivers/new
+    controller: App\Controller\AdminController::newDriver
+    methods: [GET, POST]
+
+admin_driver_edit:
+    path: /admin/drivers/{id}/edit
+    controller: App\Controller\AdminController::editDriver
+    methods: [GET, POST]
+
+admin_driver_delete:
+    path: /admin/drivers/{id}/delete
+    controller: App\Controller\AdminController::deleteDriver
+    methods: [POST]
+
+admin_demandes:
+    path: /admin/demandes
+    controller: App\Controller\AdminController::demandes
+    methods: [GET]
+
+admin_demande_valider:
+    path: /admin/demandes/{id}/valider
+    controller: App\Controller\AdminController::validerDemande
+    methods: [POST]
+
+admin_demande_terminer:
+    path: /admin/demandes/{id}/terminer
+    controller: App\Controller\AdminController::terminerDemande
+    methods: [POST]
+
+admin_users:
+    path: /admin/users
+    controller: App\Controller\AdminController::users
+    methods: [GET]
+
+admin_user_make_admin:
+    path: /admin/users/{id}/make-admin
+    controller: App\Controller\AdminController::makeAdmin
+    methods: [POST]
+
+admin_user_remove_admin:
+    path: /admin/users/{id}/remove-admin
+    controller: App\Controller\AdminController::removeAdmin
+    methods: [POST]
+
+admin_settings:
+    path: /admin/settings
+    controller: App\Controller\AdminController::settings
+    methods: [GET, POST]
+# config/routes.yaml
 controllers:
-    resource: routing.controllers
+    resource: ../src/Controller/
+    type: attribute  # ou 'annotation' selon votre version
+# config/routes.yaml
+admin_login:
+    path: /admin/login
+    controller: App\Controller\SecurityController::adminLogin
+    methods: [GET, POST]

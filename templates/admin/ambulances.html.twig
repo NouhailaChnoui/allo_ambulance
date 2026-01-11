@@ -1,0 +1,329 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ambulances - Admin Allo Ambulance{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="fas fa-ambulance text-success"></i> 
+            Gestion des Ambulances
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('admin_dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+            <button class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#addAmbulanceModal">
+                <i class="fas fa-plus"></i> Ajouter ambulance
+            </button>
+        </div>
+    </div>
+
+    <!-- statistiques ambulances -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Ambulances totales</h6>
+                            <h2 class="mb-0">{{ ambulances|length }}</h2>
+                        </div>
+                        <i class="fas fa-ambulance fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Disponibles</h6>
+                            <h2 class="mb-0">{{ ambulances|filter(a => a.disponible)|length }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Occupées</h6>
+                            <h2 class="mb-0">{{ ambulances|filter(a => not a.disponible)|length }}</h2>
+                        </div>
+                        <i class="fas fa-times-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- liste des ambulances -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Liste des ambulances</h5>
+            <span class="badge bg-primary">{{ ambulances|length }} ambulance(s)</span>
+        </div>
+        <div class="card-body">
+            {% if ambulances|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Immatriculation</th>
+                                <th>Marque/Modèle</th>
+                                <th>Type</th>
+                                <th>Disponibilité</th>
+                                <th>Date d'ajout</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ambulance in ambulances %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ ambulance.immatriculation }}</strong>
+                                    </td>
+                                    <td>
+                                        <div>{{ ambulance.marque }}</div>
+                                        <small class="text-muted">{{ ambulance.modele }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ ambulance.type }}</span>
+                                    </td>
+                                    <td>
+                                        {% if ambulance.disponible %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Disponible
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times"></i> Occupée
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ ambulance.createdAt|date('d/m/Y') }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- Bouton Modifier -->
+                                            <button type="button" class="btn btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editAmbulanceModal"
+                                                    onclick="loadAmbulanceData({{ ambulance.id }}, '{{ ambulance.immatriculation }}', '{{ ambulance.marque }}', '{{ ambulance.modele }}', '{{ ambulance.type }}', {{ ambulance.disponible ? 'true' : 'false' }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            
+                                            <!-- Bouton Changer statut -->
+                                            <form method="post" action="{{ path('admin_ambulance_toggle', {'id': ambulance.id}) }}" style="display: inline;">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ ambulance.id) }}">
+                                                <button type="submit" class="btn btn-outline-{{ ambulance.disponible ? 'warning' : 'success' }}">
+                                                    <i class="fas fa-exchange-alt"></i>
+                                                </button>
+                                            </form>
+                                            
+                                            <!-- Bouton Supprimer -->
+                                            <form method="post" action="{{ path('admin_ambulance_delete', {'id': ambulance.id}) }}" 
+                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette ambulance?');"
+                                                  style="display: inline;">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ ambulance.id) }}">
+                                                <button type="submit" class="btn btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-ambulance fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucune ambulance</h5>
+                    <p class="text-muted">Aucune ambulance n'a été ajoutée au parc.</p>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addAmbulanceModal">
+                        <i class="fas fa-plus"></i> Ajouter la première ambulance
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!--  ajout d'ambulance -->
+<div class="modal fade" id="addAmbulanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Nouvelle ambulance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ path('admin_ambulance_new') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('add_ambulance') }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Immatriculation *</label>
+                        <input type="text" name="immatriculation" class="form-control" 
+                               placeholder="AB-123-CD" required maxlength="20">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Marque *</label>
+                            <select name="marque" class="form-select" required>
+                                <option value="">Choisir une marque</option>
+                                <option value="Mercedes">Mercedes</option>
+                                <option value="Renault">Renault</option>
+                                <option value="Volkswagen">Volkswagen</option>
+                                <option value="Ford">Ford</option>
+                                <option value="Fiat">Fiat</option>
+                                <option value="Citroën">Citroën</option>
+                                <option value="Peugeot">Peugeot</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Modèle *</label>
+                            <input type="text" name="modele" class="form-control" 
+                                   placeholder="Sprinter, Master, etc." required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Type *</label>
+                        <select name="type" class="form-select" required>
+                            <option value="">Choisir un type</option>
+                            <option value="urgence">Urgence</option>
+                            <option value="transport">Transport</option>
+                            <option value="multi">Multi</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="disponible" class="form-check-input" id="disponibleCheck" checked>
+                        <label class="form-check-label" for="disponibleCheck">
+                            Disponible immédiatement
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Ajouter l'ambulance
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!--   modification d'ambulance -->
+<div class="modal fade" id="editAmbulanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Modifier l'ambulance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="" id="editAmbulanceForm">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('edit_ambulance') }}">
+                    <input type="hidden" name="id" id="editAmbulanceId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Immatriculation *</label>
+                        <input type="text" name="immatriculation" id="editImmatriculation" 
+                               class="form-control" required maxlength="20">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Marque *</label>
+                            <select name="marque" id="editMarque" class="form-select" required>
+                                <option value="">Choisir une marque</option>
+                                <option value="Mercedes">Mercedes</option>
+                                <option value="Renault">Renault</option>
+                                <option value="Volkswagen">Volkswagen</option>
+                                <option value="Ford">Ford</option>
+                                <option value="Fiat">Fiat</option>
+                                <option value="Citroën">Citroën</option>
+                                <option value="Peugeot">Peugeot</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Modèle *</label>
+                            <input type="text" name="modele" id="editModele" 
+                                   class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Type *</label>
+                        <select name="type" id="editType" class="form-select" required>
+                            <option value="">Choisir un type</option>
+                            <option value="urgence">Urgence</option>
+                            <option value="transport">Transport</option>
+                            <option value="multi">Multi</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="disponible" class="form-check-input" id="editDisponible">
+                        <label class="form-check-label" for="editDisponible">
+                            Disponible
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadAmbulanceData(id, immatriculation, marque, modele, type, disponible) {
+    document.getElementById('editAmbulanceId').value = id;
+    document.getElementById('editImmatriculation').value = immatriculation;
+    document.getElementById('editMarque').value = marque;
+    document.getElementById('editModele').value = modele;
+    document.getElementById('editType').value = type;
+    document.getElementById('editDisponible').checked = disponible;
+        document.getElementById('editAmbulanceForm').action = '/admin/ambulances/' + id + '/edit';
+}
+
+    document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+
+<style>
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+.badge {
+    font-size: 0.85em;
+    padding: 0.35em 0.65em;
+}
+</style>
+{% endblock %}

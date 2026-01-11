@@ -1,0 +1,318 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Chauffeurs - Admin Allo Ambulance{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="fas fa-user-tie text-warning"></i> 
+            Gestion des Chauffeurs
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('admin_dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+            <button class="btn btn-sm btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#addDriverModal">
+                <i class="fas fa-plus"></i> Nouveau chauffeur
+            </button>
+        </div>
+    </div>
+
+    <!-- statistiques chauffeurs -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Chauffeurs totaux</h6>
+                            <h2 class="mb-0">{{ chauffeurs|length }}</h2>
+                        </div>
+                        <i class="fas fa-user-tie fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Disponibles</h6>
+                            <h2 class="mb-0">{{ chauffeurs|filter(c => c.disponible)|length }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Indisponibles</h6>
+                            <h2 class="mb-0">{{ chauffeurs|filter(c => not c.disponible)|length }}</h2>
+                        </div>
+                        <i class="fas fa-times-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- liste des chauffeurs -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Liste des chauffeurs</h5>
+            <span class="badge bg-warning">{{ chauffeurs|length }} chauffeur(s)</span>
+        </div>
+        <div class="card-body">
+            {% if chauffeurs|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nom & Prénom</th>
+                                <th>Téléphone</th>
+                                <th>Permis</th>
+                                <th>Disponibilité</th>
+                                <th>Date d'ajout</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for chauffeur in chauffeurs %}
+                                <tr>
+                                    <td>{{ chauffeur.id }}</td>
+                                    <td>
+                                        <strong>{{ chauffeur.getFullName() }}</strong>
+                                        <div class="text-muted small">{{ chauffeur.adresse|slice(0, 30) }}...</div>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-phone"></i> {{ chauffeur.telephone }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ chauffeur.permis }}</span>
+                                    </td>
+                                    <td>
+                                        {% if chauffeur.disponible %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Disponible
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times"></i> Indisponible
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ chauffeur.createdAt|date('d/m/Y') }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- Bouton Modifier -->
+                                            <button type="button" class="btn btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editDriverModal"
+                                                    onclick="loadDriverData({{ chauffeur.id }}, '{{ chauffeur.nom }}', '{{ chauffeur.prenom }}', '{{ chauffeur.telephone }}', '{{ chauffeur.adresse }}', '{{ chauffeur.permis }}', {{ chauffeur.disponible ? 'true' : 'false' }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            
+                                            <!-- Bouton Changer statut -->
+                                            <form method="post" action="{{ path('admin_chauffeur_toggle', {'id': chauffeur.id}) }}" style="display: inline;">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ chauffeur.id) }}">
+                                                <button type="submit" class="btn btn-outline-{{ chauffeur.disponible ? 'danger' : 'success' }}">
+                                                    <i class="fas fa-exchange-alt"></i>
+                                                </button>
+                                            </form>
+                                            
+                                            <!-- Bouton Supprimer -->
+                                            <form method="post" action="{{ path('admin_chauffeur_delete', {'id': chauffeur.id}) }}" 
+                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce chauffeur?');"
+                                                  style="display: inline;">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ chauffeur.id) }}">
+                                                <button type="submit" class="btn btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-user-tie fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucun chauffeur</h5>
+                    <p class="text-muted">Aucun chauffeur n'a été ajouté à l'équipe.</p>
+                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addDriverModal">
+                        <i class="fas fa-plus"></i> Ajouter le premier chauffeur
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!--  ajout de chauffeur -->
+<div class="modal fade" id="addDriverModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Nouveau chauffeur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ path('admin_chauffeur_new') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('add_driver') }}">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" name="nom" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" name="prenom" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Téléphone *</label>
+                        <input type="tel" name="telephone" class="form-control" 
+                               placeholder="0612345678" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Adresse *</label>
+                        <textarea name="adresse" class="form-control" rows="2" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Numéro de permis *</label>
+                        <input type="text" name="permis" class="form-control" 
+                               placeholder="PERMIS-001" required>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="disponible" class="form-check-input" id="driverDisponible" checked>
+                        <label class="form-check-label" for="driverDisponible">
+                            Disponible immédiatement
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save"></i> Ajouter le chauffeur
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!--   modification de chauffeur -->
+<div class="modal fade" id="editDriverModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Modifier le chauffeur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="" id="editDriverForm">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('edit_driver') }}">
+                    <input type="hidden" name="id" id="editDriverId">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" name="nom" id="editNom" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" name="prenom" id="editPrenom" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Téléphone *</label>
+                        <input type="tel" name="telephone" id="editTelephone" 
+                               class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Adresse *</label>
+                        <textarea name="adresse" id="editAdresse" class="form-control" rows="2" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Numéro de permis *</label>
+                        <input type="text" name="permis" id="editPermis" 
+                               class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="disponible" class="form-check-input" id="editDriverDisponible">
+                        <label class="form-check-label" for="editDriverDisponible">
+                            Disponible
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fonction pour charger les données dans le modal d'édition
+function loadDriverData(id, nom, prenom, telephone, adresse, permis, disponible) {
+    document.getElementById('editDriverId').value = id;
+    document.getElementById('editNom').value = nom;
+    document.getElementById('editPrenom').value = prenom;
+    document.getElementById('editTelephone').value = telephone;
+    document.getElementById('editAdresse').value = adresse;
+    document.getElementById('editPermis').value = permis;
+    document.getElementById('editDriverDisponible').checked = disponible;
+    
+    // Mettre à jour l'action du formulaire
+// In the loadDriverData function, ensure the URL is built correctly
+const url = "{{ path('admin_chauffeur_edit', {'id': 'PLACEHOLDER'}) }}".replace('PLACEHOLDER', id);
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    // Tooltips
+    var tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltips.map(function(el) {
+        return new bootstrap.Tooltip(el);
+    });
+});
+</script>
+
+<style>
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+.badge {
+    font-size: 0.85em;
+    padding: 0.35em 0.65em;
+}
+</style>
+{% endblock %}

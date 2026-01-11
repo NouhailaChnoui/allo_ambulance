@@ -1,0 +1,142 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil - Allo Ambulance{% endblock %}
+
+{% block body %}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card text-white bg-danger mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Total Demandes</h6>
+                        <h2 class="mb-0">{{ totalDemandes }}</h2>
+                    </div>
+                    <i class="fas fa-clipboard-list fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card text-white bg-warning mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">En Cours</h6>
+                        <h2 class="mb-0">{{ demandesEnCours }}</h2>
+                    </div>
+                    <i class="fas fa-spinner fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card text-white bg-success mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Terminées</h6>
+                        <h2 class="mb-0">{{ demandesTerminees }}</h2>
+                    </div>
+                    <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Demander une ambulance</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-plus-circle fa-4x text-danger mb-3"></i>
+                                <h5 class="card-title">Urgence</h5>
+                                <p class="card-text">Pour les cas d'urgence médicale immédiate</p>
+                                <a href="{{ path('app_demande_urgence') }}" class="btn btn-danger">Demander</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-users fa-4x text-warning mb-3"></i>
+                                <h5 class="card-title">Multi-Urgent</h5>
+                                <p class="card-text">Pour transporter plusieurs patients simultanément</p>
+                                <a href="{{ path('app_demande_muti_urgent') }}" class="btn btn-warning">Demander</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-ambulance fa-4x text-primary mb-3"></i>
+                                <h5 class="card-title">Transport</h5>
+                                <p class="card-text">Pour les transports médicaux non urgents</p>
+                                <a href="{{ path('app_demande_transport') }}" class="btn btn-primary">Demander</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Dernières Demandes</h4>
+            </div>
+            <div class="card-body">
+                {% if app.user.demandes|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for demande in app.user.demandes|slice(0, 5) %}
+                                    <tr>
+                                        <td>#{{ demande.id }}</td>
+                                        <td>{{ demande.getTypeLabel() }}</td>
+                                        <td>{{ demande.createdAt|date('d/m/Y H:i') }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ demande.statut == 'termine' ? 'success' : (demande.statut == 'en_cours' ? 'warning' : 'secondary') }}">
+                                                {{ demande.getStatutLabel() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{{ path('app_historique') }}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucune demande pour le moment</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
