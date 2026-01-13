@@ -289,6 +289,7 @@ function loadDriverData(id, nom, prenom, telephone, adresse, permis, disponible)
     // Mettre à jour l'action du formulaire
 // In the loadDriverData function, ensure the URL is built correctly
 const url = "{{ path('admin_chauffeur_edit', {'id': 'PLACEHOLDER'}) }}".replace('PLACEHOLDER', id);
+document.getElementById('editDriverForm').action = url;
 }
 
 // Initialisation
